@@ -1,92 +1,46 @@
-
 pipeline {
     agent any
 
     tools {
-         terraform 'Terraform'
-     }
-
-    environment {
-        //Credentials for Prod environment
-        AWS_ACCESS_KEY_ID     = credentials('AWS_ACCESS_KEY_ID') 
-        AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY')
+        terraform 'Terraform'
     }
+
     stages {
-        stage('Git checkout from prod branch') {
+
+        stage('Git Checkout') {
             steps {
                 echo 'Cloning project codebase...'
                 git branch: 'main', url: 'https://github.com/devopsmike-01/jenkins-terraform-infra-repo.git'
-                sh 'ls'
+                sh 'ls -al'
             }
         }
 
-        stage('Verifying AWS Configuration'){
+        stage('Verify Terraform Version') {
             steps {
-                sh 'aws s3 ls'
-            }
-        }
-
-         stage('Verify Terraform Version') {
-            steps {
-                echo 'verifying the terrform version...'
+                echo 'Checking terraform version...'
                 sh 'terraform --version'
-               
             }
         }
-        
-        stage('Terraform init') {
+
+        stage('Terraform Init') {
             steps {
-                echo 'Initiliazing terraform project...'
+                echo 'Initializing terraform...'
                 sh 'terraform init'
-               
             }
         }
-        
-        stage('Terraform validate') {
+
+        stage('Terraform Validate') {
             steps {
-                echo 'Code syntax checking...'
+                echo 'Validating terraform syntax...'
                 sh 'terraform validate'
-                sh 'pwd'
             }
-        }
-        
-        stage('Terraform plan') {
-            steps {
-                echo 'Terraform plan for the dry run...'
-                sh 'terraform plan --auto-approve"'
-               
-            }
-        }
-        
-        stage('Manual approval to Create') {
-            steps {
-                
-                input 'Approval required to create resources'
-               
-            }
-        }
-        
-        stage('Terraform apply') {
-            steps {
-                echo 'Terraform apply...'
-                sh 'terraform apply --auto-approve'
-            } 
         }
 
-        stage('Manual approval to Delete') {
+        stage('Terraform Plan (Dry Run)') {
             steps {
-                
-                input 'Approval required to clean environment'
-               
+                echo 'Showing Terraform plan (no deployment)...'
+                sh 'terraform plan'
             }
         }
-        
-        stage('Terraform Destroy') {
-            steps {
-                echo 'Terraform Destroy...'
-                sh 'terraform destroy --auto-approve'
-                }
-            }
     }
-
 }
